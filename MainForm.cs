@@ -1,37 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace LightsOut
 {
     public partial class MainForm : Form
     {
-
+        private LightsOutGame lightsOutGame;
         private const int GridOffset = 25;
         private const int GridLength = 200;
-        private const int NumCells = 3;
-        private const int CellLength = GridLength / NumCells;
-        private bool[,] grid;
-        private Random rand;
+        private int CellLength;
+
         public MainForm()
         {
             InitializeComponent();
-            rand = new Random();
-            grid = new bool[NumCells, NumCells];
-
-            for (int r = 0; r < NumCells; r++)
-            {
-                for (int c = 0; c < NumCells; c++)
-                {
-                    grid[r, c] = true;
-                }
-            }
+            this.lightsOutGame = new LightsOutGame();
+            this.CellLength = GridLength / lightsOutGame.GridSize;
+            this.lightsOutGame.NewGame();
         }
 
         private void newToolStripMenuItem_Click(object sender, EventArgs e)
@@ -52,13 +37,13 @@ namespace LightsOut
         private void MainForm_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
-            for (int r = 0; r < NumCells; r++)
+            for (int r = 0; r < this.lightsOutGame.GridSize; r++)
             {
-                for (int c = 0; c < NumCells; c++)
+                for (int c = 0; c < this.lightsOutGame.GridSize; c++)
                 {
                     Brush brush;
                     Pen pen;
-                    if (grid[r, c])
+                    if (this.lightsOutGame.GetGridValue(r, c))
                     {
                         pen = Pens.Black;
                         brush = Brushes.White;
@@ -78,40 +63,20 @@ namespace LightsOut
 
         private void MainForm_MouseDown(object sender, MouseEventArgs e)
         {
-            if (e.X < GridOffset || e.X > CellLength * NumCells + GridOffset ||
-            e.Y < GridOffset || e.Y > CellLength * NumCells + GridOffset)
+            if (e.X < GridOffset || e.X > CellLength * this.lightsOutGame.GridSize + GridOffset ||
+            e.Y < GridOffset || e.Y > CellLength * this.lightsOutGame.GridSize + GridOffset)
                 return;
             int r = (e.Y - GridOffset) / CellLength;
             int c = (e.X - GridOffset) / CellLength;
 
-            for (int i = r - 1; i <= r + 1; i++)
-                for (int j = c - 1; j <= c + 1; j++)
-                    if (i >= 0 && i < NumCells && j >= 0 && j < NumCells)
-                        grid[i, j] = !grid[i, j];
+            this.lightsOutGame.Move(r, c);
+
             this.Invalidate();
-            if (PlayerWon())
+            if (this.lightsOutGame.IsGameOver())
             {
                 MessageBox.Show(this, "Congratulations! You've won!", "Lights Out!",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-        }
-
-        private bool PlayerWon()
-        {
-            bool didWin = true;
-
-            for(int r = 0; r < NumCells; r++)
-            {
-                for(int c = 0; c < NumCells; c++)
-                {
-                    if(grid[r,c])
-                    {
-                        didWin = false;
-                    }
-                }
-            }
-
-            return didWin;
         }
 
         private void exitButton_Click(object sender, EventArgs e)
@@ -121,14 +86,7 @@ namespace LightsOut
 
         private void newGameButton_Click(object sender, EventArgs e)
         {
-            for (int r = 0; r < NumCells; r++)
-            {
-                for (int c = 0; c < NumCells; c++)
-                {
-                    grid[r, c] = rand.Next(2) == 1;
-                }
-            }
-
+            this.lightsOutGame.NewGame();
             this.Invalidate();
         }
 
